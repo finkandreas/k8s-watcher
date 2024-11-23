@@ -19,9 +19,7 @@ class NotifyMessage(TypedDict):
 
 def should_exclude(pod_name: str, exclude_list: List[re.Pattern[str]]) -> bool:
     for r in exclude_list:
-        print(f'Trying to match {pod_name} with {r.pattern}')
         if r.fullmatch(pod_name): return True
-        print(f"No match for {pod_name} with {r}")
     return False
 
 
@@ -66,6 +64,7 @@ class PodWatcher(object):
         pods = self._kc.list_namespaced_pod(self._ns)
         for p in pods.items:
             if should_exclude(p.metadata.name, self._exclude_pods):
+                print(f"Not notifying for {p.metadata.name} because we matched an exclude pattern")
                 continue
             if p.metadata.uid not in self._last_pods:
                 # new pod - register it now - do not assume that this is some error
