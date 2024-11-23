@@ -127,4 +127,6 @@ if __name__ == '__main__':
             print("Error: Caught an exception")
             traceback.print_exception(e)
 
+        # flush any output
+        print(end='', flush=True)
         time.sleep(60)
