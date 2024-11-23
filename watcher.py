@@ -1,5 +1,8 @@
 import pprint
 import os
+import argparse
+import re
+import sys
 import time
 import traceback
 
@@ -14,11 +17,18 @@ class NotifyMessage(TypedDict):
     body: str
 
 
+def should_exclude(pod_name: str, exclude_list: List[re.Pattern[str]]) -> bool:
+    for r in exclude_list:
+        if r.match(pod_name): return True
+    return False
+
+
 class EventWatcher(object):
-    def __init__(self, namespace: str, client: client.CoreV1Api) -> None:
+    def __init__(self, namespace: str, client: client.CoreV1Api, exclude_pods: List[re.Pattern[str]]) -> None:
         self._seen_events: Dict[str, Any] = {}
         self._kc = client
         self._ns = namespace
+        self._exclude_pods = exclude_pods
         self._first_run = True
 
     def get_notifications(self) -> List[NotifyMessage]:
@@ -26,6 +36,8 @@ class EventWatcher(object):
         events = self._kc.list_namespaced_event(self._ns)
         interesting = [x for x in events.items if x.type != 'Normal']
         for ev in interesting:
+            if should_exclude(ev.involved_object.name, self._exclude_pods):
+                continue
             if ev.metadata.uid not in self._seen_events:
                 # new event - we do not monitor if the counter of the event is increasing
                 summary = f'{ev.type}: New event in {self._ns}'
@@ -39,16 +51,19 @@ class EventWatcher(object):
         return ret
 
 class PodWatcher(object):
-    def __init__(self, namespace: str, client: client.CoreV1Api) -> None:
+    def __init__(self, namespace: str, client: client.CoreV1Api, exclude_pods: List[re.Pattern[str]]) -> None:
         self._last_pods: Dict[str, Any] = {}
         self._kc = client
         self._ns = namespace
+        self._exclude_pods = exclude_pods
         self._first_run = True
 
     def get_notifications(self) -> List[NotifyMessage]:
         ret = []
         pods = self._kc.list_namespaced_pod(self._ns)
         for p in pods.items:
+            if should_exclude(p.metadata.name, self._exclude_pods):
+                continue
             if p.metadata.uid not in self._last_pods:
                 # new pod - register it now - do not assume that this is some error
                 self._last_pods[p.metadata.uid] = p
@@ -78,6 +93,15 @@ if __name__ == '__main__':
         raise Exception("Missing notification url. You must provide it in the environment variable NOTIFY_URL")
     notify_url = os.environ['NOTIFY_URL']
 
+    parser = argparse.ArgumentParser(prog="K8s watcher",
+                                     description="Watch kubernetes namespace for events and pod restarts")
+    parser.add_argument('--exclude',
+                        action='append',
+                        help="Exclude pod matching regular expression (use multiple times for multiple excludes)")
+    parsed_args = parser.parse_args()
+    exclude_list = parsed_args.exclude
+    print(f'Excluding pods {exclude_list}')
+
     namespace = 'default'
     if os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount/namespace'):
         namespace = open('/var/run/secrets/kubernetes.io/serviceaccount/namespace').read()
@@ -85,8 +109,8 @@ if __name__ == '__main__':
     kubeclient = client.CoreV1Api()
 
     # setup watchers
-    ev_watch = EventWatcher(namespace, kubeclient)
-    pod_watch = PodWatcher(namespace, kubeclient)
+    ev_watch = EventWatcher(namespace, kubeclient, exclude_list)
+    pod_watch = PodWatcher(namespace, kubeclient, exclude_list)
 
     while True:
         try:
