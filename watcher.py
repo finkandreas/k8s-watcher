@@ -19,7 +19,9 @@ class NotifyMessage(TypedDict):
 
 def should_exclude(pod_name: str, exclude_list: List[re.Pattern[str]]) -> bool:
     for r in exclude_list:
-        if r.match(pod_name): return True
+        print(f'Trying to match {pod_name} with {r.pattern}')
+        if r.fullmatch(pod_name): return True
+        print(f"No match for {pod_name} with {r}")
     return False
 
 
@@ -37,6 +39,7 @@ class EventWatcher(object):
         interesting = [x for x in events.items if x.type != 'Normal']
         for ev in interesting:
             if should_exclude(ev.involved_object.name, self._exclude_pods):
+                print(f"Not notifying for {ev.involved_object.name} because we matched an exclude pattern")
                 continue
             if ev.metadata.uid not in self._seen_events:
                 # new event - we do not monitor if the counter of the event is increasing
