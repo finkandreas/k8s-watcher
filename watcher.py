@@ -46,32 +46,28 @@ class PodWatcher(object):
         self._first_run = True
 
     def get_notifications(self) -> List[NotifyMessage]:
-        try:
-            ret = []
-            pods = self._kc.list_namespaced_pod(self._ns)
-            for p in pods.items:
-                if p.metadata.uid not in self._last_pods:
-                    # new pod - register it now - do not assume that this is some error
-                    self._last_pods[p.metadata.uid] = p
-                else:
-                    podName = p.metadata.name
-                    prevPod = self._last_pods[p.metadata.uid]
-                    self._last_pods[p.metadata.uid] = p
-                    for c_old, c_new in zip(prevPod.status.container_statuses, p.status.container_statuses):
-                        if c_old.name != c_new.name:
-                            print(f"Error: The container names do not match. {c_old.name=} {c_new.name}")
-                            continue
-                        if c_new.ready != True and c_old.ready == True:
-                            summary = f"Warning: container {c_new.name} in pod {podName} is not ready"
-                            body= f"{c_new.to_str()}"
-                            ret.append(NotifyMessage(summary=summary, body=body))
-                        if c_new.restart_count > c_old.restart_count:
-                            summary = f'Warning: container {c_new.name} in pod {podName} was restarted.'
-                            body = f'Old restart count={c_old.restart_count}, new restart count={c_new.restart_count}'
-                            ret.append(NotifyMessage(summary=summary, body=body))
-        except Exception as e:
-            print("Error: Caught an exception")
-            traceback.print_exception(e)
+        ret = []
+        pods = self._kc.list_namespaced_pod(self._ns)
+        for p in pods.items:
+            if p.metadata.uid not in self._last_pods:
+                # new pod - register it now - do not assume that this is some error
+                self._last_pods[p.metadata.uid] = p
+            else:
+                podName = p.metadata.name
+                prevPod = self._last_pods[p.metadata.uid]
+                self._last_pods[p.metadata.uid] = p
+                for c_old, c_new in zip(prevPod.status.container_statuses, p.status.container_statuses):
+                    if c_old.name != c_new.name:
+                        print(f"Error: The container names do not match. {c_old.name=} {c_new.name}")
+                        continue
+                    if c_new.ready != True and c_old.ready == True:
+                        summary = f"Warning: container {c_new.name} in pod {podName} is not ready"
+                        body= f"{c_new.to_str()}"
+                        ret.append(NotifyMessage(summary=summary, body=body))
+                    if c_new.restart_count > c_old.restart_count:
+                        summary = f'Warning: container {c_new.name} in pod {podName} was restarted.'
+                        body = f'Old restart count={c_old.restart_count}, new restart count={c_new.restart_count}'
+                        ret.append(NotifyMessage(summary=summary, body=body))
 
         return ret
 
@@ -93,11 +89,16 @@ if __name__ == '__main__':
     pod_watch = PodWatcher(namespace, kubeclient)
 
     while True:
-        new_events = ev_watch.get_notifications()
-        new_events += pod_watch.get_notifications()
-        if new_events:
-            for ev in new_events:
-                r = requests.post(notify_url, json=ev)
-                if r.status_code >= 400:
-                    print(f'Failed sending notification {r.status_code=} {r.text=}. All headers:\n{r.headers=}')
+        try:
+            new_events = ev_watch.get_notifications()
+            new_events += pod_watch.get_notifications()
+            if new_events:
+                for ev in new_events:
+                    r = requests.post(notify_url, json=ev)
+                    if r.status_code >= 400:
+                        print(f'Failed sending notification {r.status_code=} {r.text=}. All headers:\n{r.headers=}')
+        except Exception as e:
+            print("Error: Caught an exception")
+            traceback.print_exception(e)
+
         time.sleep(60)
