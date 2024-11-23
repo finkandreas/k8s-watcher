@@ -99,7 +99,7 @@ if __name__ == '__main__':
                         action='append',
                         help="Exclude pod matching regular expression (use multiple times for multiple excludes)")
     parsed_args = parser.parse_args()
-    exclude_list = parsed_args.exclude
+    exclude_list = [re.compile(x) for x in parsed_args.exclude]
     print(f'Excluding pods {exclude_list}')
 
     namespace = 'default'
