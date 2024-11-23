@@ -77,7 +77,7 @@ class PodWatcher(object):
                     if c_old.name != c_new.name:
                         print(f"Error: The container names do not match. {c_old.name=} {c_new.name}")
                         continue
-                    if c_new.ready != True and not (c_new.terminated and c_new.terminated.exit_code == 0):
+                    if c_new.ready != True and not (c_new.state.terminated and c_new.state.terminated.exit_code == 0):
                         summary = f"Warning: container {c_new.name} in pod {podName} is not ready"
                         body= f"{c_new.to_str()}"
                         ret.append(NotifyMessage(summary=summary, body=body))
