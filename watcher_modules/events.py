@@ -12,7 +12,6 @@ class EventWatcher(WatcherBase):
         self._kc = client
         self._ns = namespace
         self._exclude_pods = [re.compile(x) for x in exclude_pods]
-        self._exclude_pods = exclude_pods
         self._first_run = True
 
     def get_notifications(self) -> List[NotifyMessage]:
