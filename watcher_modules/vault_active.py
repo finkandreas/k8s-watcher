@@ -36,7 +36,4 @@ class VaultActiveWatcher(WatcherBase):
         if len(active_pods) > 1:
             body = '\n'.join([f'marked as active: {p.metadata.name}' for p in active_pods])
             ret.append(NotifyMessage(summary='🟡 Warning: More than one pod is marked as active', body=body))
-        print(f'current-active={active_pods[0].metadata.name}')
-        print(ret)
-        return []
         return ret
