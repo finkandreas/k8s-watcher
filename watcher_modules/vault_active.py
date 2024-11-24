@@ -4,18 +4,17 @@ from typing import Any, Dict, List, Optional
 
 from kubernetes import client
 
-from .common import should_exclude, NotifyMessage, WatcherBase
+from .common import NotifyMessage, WatcherBase
 
 def vault_pod_marked_active(labels: Optional[Dict[str, str]]) -> bool:
     if labels is None: return False
     return labels.get('vault-active', '') == 'true'
 
 class VaultActiveWatcher(WatcherBase):
-    def __init__(self, namespace: str, client: client.CoreV1Api, exclude_pods: List[re.Pattern[str]]) -> None:
+    def __init__(self, namespace: str, client: client.CoreV1Api) -> None:
         self._last_active: str = ''
         self._kc = client
         self._ns = namespace
-        self._exclude_pods = exclude_pods
 
 
     def get_notifications(self) -> List[NotifyMessage]:

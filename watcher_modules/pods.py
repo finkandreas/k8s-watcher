@@ -7,11 +7,11 @@ from kubernetes import client
 from .common import should_exclude, NotifyMessage, WatcherBase
 
 class PodWatcher(object):
-    def __init__(self, namespace: str, client: client.CoreV1Api, exclude_pods: List[re.Pattern[str]]) -> None:
+    def __init__(self, namespace: str, client: client.CoreV1Api, exclude_pods: List[str] = []) -> None:
         self._last_pods: Dict[str, Any] = {}
         self._kc = client
         self._ns = namespace
-        self._exclude_pods = exclude_pods
+        self._exclude_pods = [re.compile(x) for x in exclude_pods]
         self._first_run = True
 
     def get_notifications(self) -> List[NotifyMessage]:

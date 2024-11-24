@@ -34,6 +34,21 @@ metadata:
 
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-watcher-config
+immutable: true
+data:
+  config.yaml: |
+    modules:
+      - watcher: pods
+        exclude_pods: []
+      - watcher: events
+        exclude_pods: []
+    notify_url: 'https://example.com/post_notify
+
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: k8s-watcher
@@ -42,8 +57,12 @@ spec:
   - name: k8s-watcher
     image: ghcr.io/finkandreas/k8s-watcher:latest
     imagePullPolicy: Always
-    command: ['python', '/opt/watcher.py', 'events', 'pods']
-    env:
-      - name: NOTIFY_URL
-        value: '<your-notification-url>'
+    command: ['python', '/opt/watcher.py', '--config=/etc/k8s-watcher/config.yaml']
+    volumeMounts:
+      - name: config
+        mountPath: /etc/k8s-watcher
   serviceAccountName: watcher
+  volumes:
+    - name: config
+      configMap:
+        name: k8s-watcher-config
