@@ -31,7 +31,7 @@ if __name__ == '__main__':
     namespace = 'default'
     if os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount/namespace'):
         namespace = open('/var/run/secrets/kubernetes.io/serviceaccount/namespace').read()
-    kubernetesconfig.load_config()
+    kubernetes.config.load_config()
     kubeclient = kubernetes.client.CoreV1Api()
 
     # setup watchers
