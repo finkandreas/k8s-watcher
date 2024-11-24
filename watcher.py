@@ -45,6 +45,7 @@ class EventWatcher(object):
                 body = f'pod: {ev.involved_object.name}\nfield_path: {ev.involved_object.field_path}\nmessage: {ev.message}'
                 ret.append(NotifyMessage(summary=summary,body=body))
                 self._seen_events[ev.metadata.uid] = True
+                print(f'{ev=}')
 
         if self._first_run:
             self._first_run = False
@@ -81,10 +82,12 @@ class PodWatcher(object):
                         summary = f"Warning: container {c_new.name} in pod {podName} is not ready"
                         body= f"{c_new.to_str()}"
                         ret.append(NotifyMessage(summary=summary, body=body))
+                        print(f'{c_new=} {c_old=}')
                     if c_new.restart_count > c_old.restart_count:
                         summary = f'Warning: container {c_new.name} in pod {podName} was restarted.'
                         body = f'Old restart count={c_old.restart_count}, new restart count={c_new.restart_count}'
                         ret.append(NotifyMessage(summary=summary, body=body))
+                        print(f'{c_new=} {c_old=}')
 
         return ret
 
