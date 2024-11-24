@@ -1,10 +1,14 @@
 import re
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from kubernetes import client
 
 from .common import should_exclude, NotifyMessage, WatcherBase
+
+def vault_pod_marked_active(labels: Optional[Dict[str, str]]) -> bool:
+    if labels is None: return False
+    return labels.get('vault-active', '') == 'true'
 
 class VaultActiveWatcher(WatcherBase):
     def __init__(self, namespace: str, client: client.CoreV1Api, exclude_pods: List[re.Pattern[str]]) -> None:
@@ -13,10 +17,11 @@ class VaultActiveWatcher(WatcherBase):
         self._ns = namespace
         self._exclude_pods = exclude_pods
 
+
     def get_notifications(self) -> List[NotifyMessage]:
         ret = []
         pods = self._kc.list_namespaced_pod(self._ns)
-        active_pods = [ x for x in pods.items if x.metadata.labels.get('vault-active', 'n/a') == 'true' ]
+        active_pods = [ x for x in pods.items if vault_pod_marked_active(x.metadata.labels)]
         if len(active_pods) == 0:
             ret.append(NotifyMessage(summary='🔴 Error: No vault pod is marked as active', body='Vault deployment is broken'))
         if len(active_pods) == 1:
