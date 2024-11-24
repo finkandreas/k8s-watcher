@@ -27,7 +27,7 @@ class EventWatcher(WatcherBase):
                 prefix=''
                 if ev.type.lower() == 'warning': prefix='🟡 '
                 elif ev.type.lower() == 'error': prefix='🔴 '
-                summary = f'{prefix}{ev.type}: New event in {self._ns}'
+                summary = f'{prefix}{ev.type}: New event in namespace={self._ns}'
                 body = f'pod: {ev.involved_object.name}\nfield_path: {ev.involved_object.field_path}\nmessage: {ev.message}'
                 ret.append(NotifyMessage(summary=summary,body=body))
                 self._seen_events[ev.metadata.uid] = True

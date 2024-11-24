@@ -33,12 +33,12 @@ class PodWatcher(object):
                         print(f"Error: The container names do not match. {c_old.name=} {c_new.name}")
                         continue
                     if c_new.ready != True and not (c_new.state.terminated and c_new.state.terminated.exit_code == 0):
-                        summary = f"🟡 Warning: container {c_new.name} in pod {podName} is not ready (namespace={p.metadata.namespace})"
+                        summary = f"🟡 Warning: container {c_new.name} in pod {podName} is not ready (namespace={self._ns})"
                         body= f"{c_new.to_str()}"
                         ret.append(NotifyMessage(summary=summary, body=body))
                         print(f'{c_new=} {c_old=}')
                     if c_new.restart_count > c_old.restart_count:
-                        summary = f'🟡 Warning: container {c_new.name} in pod {podName} was restarted (namespace={p.metadata.namespace})'
+                        summary = f'🟡 Warning: container {c_new.name} in pod {podName} was restarted (namespace={self._ns})'
                         body = f'Old restart count={c_old.restart_count}, new restart count={c_new.restart_count}'
                         ret.append(NotifyMessage(summary=summary, body=body))
                         print(f'{c_new=} {c_old=}')
