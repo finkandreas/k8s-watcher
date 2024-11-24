@@ -42,7 +42,7 @@ spec:
   - name: k8s-watcher
     image: ghcr.io/finkandreas/k8s-watcher:latest
     imagePullPolicy: Always
-    command: ['python', '/opt/watcher.py']
+    command: ['python', '/opt/watcher.py', 'events', 'pods']
     env:
       - name: NOTIFY_URL
         value: '<your-notification-url>'
