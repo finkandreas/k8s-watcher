@@ -24,7 +24,10 @@ class EventWatcher(WatcherBase):
                 continue
             if ev.metadata.uid not in self._seen_events:
                 # new event - we do not monitor if the counter of the event is increasing
-                summary = f'{ev.type}: New event in {self._ns}'
+                prefix=''
+                if ev.type.lower() == 'warning': prefix='🟡 '
+                elif ev.type.lower() == 'error': prefix='🔴 '
+                summary = f'{prefix}{ev.type}: New event in {self._ns}'
                 body = f'pod: {ev.involved_object.name}\nfield_path: {ev.involved_object.field_path}\nmessage: {ev.message}'
                 ret.append(NotifyMessage(summary=summary,body=body))
                 self._seen_events[ev.metadata.uid] = True
