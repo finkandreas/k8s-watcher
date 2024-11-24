@@ -16,7 +16,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="K8s watcher",
                                      description="Watch kubernetes namespace for events, pod restarts or any custom watcher")
     parser.add_argument('--config',
-                        nargs=1,
                         help='path to config file')
     parsed_args = parser.parse_args()
     with open(parsed_args.config, 'r') as config_file:
