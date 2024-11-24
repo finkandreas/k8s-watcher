@@ -41,12 +41,11 @@ if __name__ == '__main__':
         import watcher_modules
         watchers.append(watcher_modules.__dict__[m](namespace, kubeclient, exclude_list))
     print(watchers)
-    exit(0)
 
     while True:
         try:
             new_events = []
-            for watcher in watcher:
+            for watcher in watchers:
                 new_events += watcher.get_notifications()
             if new_events:
                 for ev in new_events:
