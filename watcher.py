@@ -5,7 +5,7 @@ import traceback
 
 from typing import List
 
-from kubernetes import client, config
+import kubernetes
 import requests
 import yaml
 
@@ -31,8 +31,8 @@ if __name__ == '__main__':
     namespace = 'default'
     if os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount/namespace'):
         namespace = open('/var/run/secrets/kubernetes.io/serviceaccount/namespace').read()
-    config.load_config()
-    kubeclient = client.CoreV1Api()
+    kubernetesconfig.load_config()
+    kubeclient = kubernetes.client.CoreV1Api()
 
     # setup watchers
     watchers: List[WatcherBase] = []
